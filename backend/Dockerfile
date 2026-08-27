@@ -17,6 +17,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
 # Этап 2: Финальный образ
 FROM alpine:3.20
 
+RUN apk add --no-cache wget
+
 # Создаем системного пользователя
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
