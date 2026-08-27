@@ -4,11 +4,9 @@ WORKDIR /app
 
 ARG VUE_APP_API_URL
 ENV VUE_APP_API_URL=$VUE_APP_API_URL
-
 ENV NODE_OPTIONS=--openssl-legacy-provider
 
 COPY package*.json ./
-
 RUN npm ci
 
 COPY . .
@@ -17,6 +15,8 @@ RUN npm run build
 
 
 FROM nginx:1.27-alpine
+
+RUN apk add --no-cache wget
 
 RUN sed -i 's|pid[[:space:]].*;|pid /tmp/nginx.pid;|' \
     /etc/nginx/nginx.conf
@@ -27,7 +27,8 @@ RUN addgroup -S webapp && \
     adduser -S -G webapp -s /sbin/nologin webapp
 
 RUN rm -rf /var/cache/nginx /var/log/nginx && \
-    mkdir -p /tmp/nginx \
+    mkdir -p \
+    /tmp/nginx \
     /tmp/nginx/client_temp \
     /tmp/nginx/proxy_temp \
     /tmp/nginx/fastcgi_temp \

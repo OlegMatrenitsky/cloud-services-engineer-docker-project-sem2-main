@@ -66,3 +66,14 @@ jobs:
         if: always()
         run: |
           docker ps -a
+
+      - name: Debug containers
+        if: always()
+        run: |
+          docker compose ps -a
+          echo "=== FRONTEND LOGS ==="
+          docker compose logs frontend
+          echo "=== BACKEND LOGS ==="
+          docker compose logs backend
+          echo "=== NGINX LOGS ==="
+          docker compose logs nginx
