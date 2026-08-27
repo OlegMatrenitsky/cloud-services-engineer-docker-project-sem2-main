@@ -1,86 +1,76 @@
 services:
   backend:
+    build: ./backend
     image: ${DOCKER_USER}/docker-project-backend:latest
-
     networks:
       - back_net
-
-    restart: unless-stopped
-
+    # Ограничения ресурсов
     deploy:
       resources:
         limits:
           cpus: "0.50"
           memory: 512M
-
-    read_only: true
-
-    cap_drop:
-      - ALL
-
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "nc -z localhost 8081 || exit 1" ]
       interval: 10s
-      timeout: 5s
       retries: 5
-      start_period: 10s
+    # Безопасность:
+    read_only: true
+    cap_drop:
+      - ALL
 
   frontend:
+    build:
+      context: ./frontend
+      args:
+        VUE_APP_API_URL: "/api"
     image: ${DOCKER_USER}/docker-project-frontend:latest
-
+    depends_on:
+      backend:
+        condition: service_healthy
     networks:
       - front_net
-
-    restart: unless-stopped
-
     deploy:
+      replicas: 2
       resources:
         limits:
           cpus: "0.25"
           memory: 128M
-
-    read_only: true
-
-    cap_drop:
-      - ALL
-
+      restart_policy:
+        condition: on-failure
+    restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/ || exit 1" ]
+      test: [ "CMD-SHELL", "wget -q -O /dev/null http://localhost/momo-store/ || exit 1" ]
       interval: 30s
-      timeout: 5s
       retries: 3
-      start_period: 10s
+    profiles: [ "development", "production" ]
 
   nginx:
-    image: nginx:1.27-alpine
-
+    image: nginx:1.25-alpine
     depends_on:
-      backend:
-        condition: service_healthy
       frontend:
         condition: service_healthy
-
+      backend:
+        condition: service_healthy
     networks:
       - front_net
       - back_net
-
     ports:
       - "80:80"
-
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - proxy-cache:/var/cache/nginx
-      - proxy-run:/var/run
-
+      - proxy-cache:/var/cache/nginx:rw
+      - proxy-run:/var/run:rw
     restart: unless-stopped
-
-    cap_drop:
-      - ALL
+    profiles: [ "production" ]
 
 networks:
   front_net:
     driver: bridge
-
   back_net:
     driver: bridge
 
