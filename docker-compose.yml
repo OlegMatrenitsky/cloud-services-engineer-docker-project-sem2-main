@@ -1,7 +1,5 @@
 services:
   backend:
-    build:
-      context: ./backend
     image: ${DOCKER_USER}/docker-project-backend:latest
 
     networks:
@@ -14,8 +12,6 @@ services:
         limits:
           cpus: "0.50"
           memory: 512M
-      restart_policy:
-        condition: on-failure
 
     read_only: true
 
@@ -23,19 +19,13 @@ services:
       - ALL
 
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 8081 || exit 1"]
+      test: [ "CMD-SHELL", "nc -z localhost 8081 || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
 
-
   frontend:
-    build:
-      context: ./frontend
-      args:
-        VUE_APP_API_URL: "/api"
-
     image: ${DOCKER_USER}/docker-project-frontend:latest
 
     networks:
@@ -48,8 +38,6 @@ services:
         limits:
           cpus: "0.25"
           memory: 128M
-      restart_policy:
-        condition: on-failure
 
     read_only: true
 
@@ -57,12 +45,11 @@ services:
       - ALL
 
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/ || exit 1"]
+      test: [ "CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/ || exit 1" ]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 10s
-
 
   nginx:
     image: nginx:1.27-alpine
@@ -90,14 +77,12 @@ services:
     cap_drop:
       - ALL
 
-
 networks:
   front_net:
     driver: bridge
 
   back_net:
     driver: bridge
-
 
 volumes:
   proxy-cache:
