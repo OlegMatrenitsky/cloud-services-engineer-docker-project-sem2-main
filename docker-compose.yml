@@ -1,10 +1,8 @@
 services:
-
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: ${DOCKER_USER:-local}/docker-project-backend:latest
     container_name: backend
     restart: unless-stopped
 
@@ -27,7 +25,6 @@ services:
       dockerfile: Dockerfile
       args:
         VUE_APP_API_URL: /api
-    image: ${DOCKER_USER:-local}/docker-project-frontend:latest
     container_name: frontend
     restart: unless-stopped
 
