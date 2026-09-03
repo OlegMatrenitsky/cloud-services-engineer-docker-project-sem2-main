@@ -1,10 +1,9 @@
 services:
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-
-    container_name: backend
 
     expose:
       - "8081"
@@ -14,13 +13,17 @@ services:
     cap_drop:
       - ALL
 
-    deploy:
-      resources:
-        limits:
-          cpus: "0.50"
-          memory: 512M
+    cpus: "0.50"
+    mem_limit: 512m
 
     restart: on-failure
+
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8081/health" ]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
 
     networks:
       - backend_net
@@ -29,11 +32,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-
       args:
         VUE_APP_API_URL: /api
-
-    container_name: frontend
 
     expose:
       - "8080"
@@ -43,21 +43,23 @@ services:
     cap_drop:
       - ALL
 
-    deploy:
-      resources:
-        limits:
-          cpus: "0.50"
-          memory: 512M
+    cpus: "0.50"
+    mem_limit: 512m
 
     restart: on-failure
+
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/" ]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
 
     networks:
       - frontend_net
 
   nginx:
     image: nginx:1.27-alpine
-
-    container_name: nginx
 
     ports:
       - "80:80"
@@ -75,17 +77,23 @@ services:
       - /var/run
       - /tmp
 
-    deploy:
-      resources:
-        limits:
-          cpus: "0.25"
-          memory: 256M
+    cpus: "0.25"
+    mem_limit: 256m
 
     restart: on-failure
 
     depends_on:
-      - frontend
-      - backend
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/" ]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
 
     networks:
       - frontend_net
