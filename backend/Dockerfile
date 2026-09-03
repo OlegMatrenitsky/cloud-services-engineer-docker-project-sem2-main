@@ -33,9 +33,12 @@ USER appuser
 # Открываем порт приложения
 EXPOSE 8081
 
-# HEALTHCHECK
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8081/health || exit 1
+# Healthcheck
+# Проверено, что BusyBox в golang:1.20-alpine содержит nc и поддерживает
+# параметр -z
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s \ 
+    CMD sh -c "nc -z localhost 8081 || exit 1"
+
 
 # Команда запуска контейнера
 CMD ["./app"]
