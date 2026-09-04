@@ -1,34 +1,103 @@
-# Momo Store Project – Docker Deployment
+# Momo Store – Docker Deployment
 
-Этот проект представляет собой веб-приложение **Momo Store** с backend на Go и frontend на Vue.js.
-
-Приложение запускается в Docker-контейнерах и управляется с помощью Docker Compose.  
-Для внешнего доступа используется Nginx в качестве reverse proxy.
+Веб-приложение **Momo Store** с backend на Go и frontend на Vue.js, контейнеризированное с помощью Docker и Docker Compose.
 
 ## Структура проекта
 
+```text
+.
+├── backend/              # Go REST API
+├── frontend/             # Vue.js SPA
+├── nginx.conf            # Nginx reverse proxy
+├── docker-compose.yml    # Docker Compose
+└── README.md
+```
 
-- **backend/** – Go REST API сервер.
-- **frontend/** – Vue.js одностраничное приложение (SPA).
-- **docker-compose.yml** – оркестрация контейнеров (backend, frontend, proxy).
-- **nginx.conf** – конфигурация Nginx для реверс-прокси.
-- **.github/workflows/deploy.yaml** – CI/CD workflow для сборки, сканирования и деплоя Docker-образов.
-- **README.md** – текущее описание и инструкции.
-
-## Trivy — сканирование уязвимостей
-
-Для проверки безопасности Docker-образов в проекте используется **Trivy**.
-
-Trivy выполняет поиск известных уязвимостей в:
-
-- базовых Docker-образах;
-- системных пакетах;
-- зависимостях приложения.
-
-В CI/CD pipeline Trivy запускается в отдельной job `trivy_scan` после сборки и публикации Docker-образов.
-
-Проверяются следующие образы:
+## Архитектура
 
 ```text
-docker-project-backend:latest
-docker-project-frontend:latest
+Internet
+   │
+   ▼
+ Nginx :80
+   ├──► Frontend :8080
+   └──► Backend  :8081
+```
+
+Nginx — единственная точка доступа извне. Backend и frontend работают во внутренних Docker networks.
+
+## Быстрый старт
+
+Требования: Docker и Docker Compose.
+
+```bash
+docker compose build
+docker compose up -d
+```
+
+Приложение:
+
+```text
+http://localhost
+```
+
+Проверка контейнеров:
+
+```bash
+docker compose ps
+```
+
+Логи:
+
+```bash
+docker compose logs -f
+```
+
+Остановка:
+
+```bash
+docker compose down
+```
+
+## Docker
+
+Для backend и frontend используются **multi-stage builds** и лёгкие Alpine images.
+
+Backend:
+
+```text
+golang:1.23-alpine → alpine:3.20
+```
+
+Frontend:
+
+```text
+node:18-alpine → nginx:1.27-alpine
+```
+
+В production images не попадают исходный код, Go compiler, Node.js и development dependencies.
+
+## Безопасность
+
+Используются:
+
+* непривилегированные пользователи `appuser` и `webapp`;
+* `read_only: true`;
+* `cap_drop: ALL`;
+* изолированные Docker networks;
+* ограничения CPU и памяти;
+* restart policies;
+* healthchecks;
+* только порт `80` открыт наружу.
+
+Чувствительные данные не хранятся в Dockerfile или Git и передаются через переменные окружения / Docker Secrets.
+
+## Масштабирование
+
+Backend и frontend поддерживают горизонтальное масштабирование:
+
+```bash
+docker compose up -d --scale backend=3 --scale frontend=3
+```
+
+Docker Compose запускает несколько экземпляров сервисов, а Nginx распределяет запросы между ними.
