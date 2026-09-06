@@ -135,3 +135,44 @@ docker compose up -d --scale backend=3 --scale frontend=3
 ```
 
 Docker Compose запускает несколько экземпляров сервисов, а Nginx распределяет запросы между ними.
+
+## Volumes
+
+Для Nginx используются Docker named volumes для writable runtime-данных:
+
+| Volume        | Назначение          |
+| ------------- | ------------------- |
+| `proxy-cache` | Кэш Nginx           |
+| `proxy-run`   | Runtime-файлы Nginx |
+
+Конфигурация Nginx подключается как read-only bind mount:
+
+```yaml
+volumes:
+  - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+  - proxy-cache:/var/cache/nginx
+  - proxy-run:/var/run
+```
+
+Основная файловая система контейнера остаётся `read_only: true`. Запись разрешена только в необходимые директории через named volumes и `tmpfs`.
+
+Проверить созданные volumes:
+
+```bash
+docker volume ls
+```
+
+Посмотреть информацию о volume:
+
+```bash
+docker volume inspect <volume_name>
+```
+
+Удалить volumes:
+
+```bash
+docker compose down -v
+```
+
+> `docker compose down` удаляет контейнеры и сети, но сохраняет named volumes. Флаг `-v` удаляет также volumes.
+
