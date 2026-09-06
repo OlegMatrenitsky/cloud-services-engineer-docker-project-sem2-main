@@ -63,17 +63,23 @@ docker compose down
 
 Для backend и frontend используются **multi-stage builds** и лёгкие Alpine images.
 
-Backend:
+## Размеры Docker-образов
 
-```text
-golang:1.23-alpine → alpine:3.20
-```
+Используются lightweight Alpine-образы и multi-stage builds.
 
-Frontend:
+| Компонент     | Базовый образ                          |     Размер |
+| ------------- | -------------------------------------- | ---------: |
+| Frontend      | `node:18-alpine` → `nginx:1.27-alpine` | **37.1 MB**|
+| Backend       | `golang:1.23-alpine` → `alpine:3.20`   |  **139 MB**|
+| Reverse Proxy | `nginx:1.27-alpine`                    | **~20 MB** |
 
-```text
-node:18-alpine → nginx:1.27-alpine
-```
+
+Размер репозиториев проекта:
+
+| Repository                |      Размер |
+| ------------------------- | ----------: |
+| `docker-project-frontend` | **37.1 MB** |
+| `docker-project-backend`  |  **139 MB** |
 
 В production images не попадают исходный код, Go compiler, Node.js и development dependencies.
 
@@ -91,6 +97,34 @@ node:18-alpine → nginx:1.27-alpine
 * только порт `80` открыт наружу.
 
 Чувствительные данные не хранятся в Dockerfile или Git и передаются через переменные окружения / Docker Secrets.
+
+### Секреты
+
+Секретные значения не хранятся непосредственно в `docker-compose.yml`.
+
+Для локальной разработки можно использовать `.env`:
+
+```env
+DB_PASSWORD=your-secret
+```
+
+Для более безопасного варианта Docker Compose поддерживает secrets:
+
+```yaml
+services:
+  backend:
+    secrets:
+      - db_password
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+```
+
+Секрет доступен контейнеру через `/run/secrets/db_password`.
+
+Файлы `.env` и `secrets/` не должны попадать в Git.
+
 
 ## Масштабирование
 
