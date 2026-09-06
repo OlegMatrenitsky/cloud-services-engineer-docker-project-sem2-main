@@ -69,8 +69,8 @@ docker compose down
 
 | Компонент     | Базовый образ                          |     Размер |
 | ------------- | -------------------------------------- | ---------: |
-| Frontend      | `node:18-alpine` → `nginx:1.27-alpine` | **37.1 MB**|
-| Backend       | `golang:1.23-alpine` → `alpine:3.20`   |  **139 MB**|
+| Frontend      | `node:18-alpine` → `nginx:1.27-alpine` |           -|
+| Backend       | `golang:1.23-alpine` → `alpine:3.20`   |           -|
 | Reverse Proxy | `nginx:1.27-alpine`                    | **~20 MB** |
 
 
